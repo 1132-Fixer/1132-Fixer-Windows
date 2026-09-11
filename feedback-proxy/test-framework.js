@@ -237,6 +237,24 @@ check('token stored only as hash; tampered token -> 401', async () => {
     tampered.status === 401;
 });
 
+check('principals: browser product codes EDGE / FIREFOX / BRAVE register; /health advertises them; ratings filter accepts them', async () => {
+  const results = [];
+  for (const [product, ip] of [['EDGE', '10.1.0.5'], ['FIREFOX', '10.1.0.6'], ['BRAVE', '10.1.0.7']]) {
+    const r = await req('POST', '/v1/principals',
+      { product, appVersion: '1.2.7' }, { 'x-forwarded-for': ip });
+    results.push(r.status === 201 && r.json.product === product);
+  }
+  const h = await req('GET', '/health');
+  const advertised = h.json.capabilities && h.json.capabilities.products;
+  const rating = await req('GET', '/v1/ratings/current?product=FIREFOX');
+  const stillBad = await req('POST', '/v1/principals',
+    { product: 'SAFARI', appVersion: '1' }, { 'x-forwarded-for': '10.1.0.8' });
+  return results.every(Boolean) && Array.isArray(advertised) &&
+    ['WINDOWS', 'CHROME', 'MACOS', 'EDGE', 'FIREFOX', 'BRAVE'].every((p) => advertised.includes(p)) &&
+    rating.status === 200 && stillBad.status === 400 &&
+    /EDGE, FIREFOX, BRAVE/.test(stillBad.json.error.message);
+});
+
 check('case create: same key + same body -> SAME random FX case, one row', async () => {
   const missing = await req('POST', '/v1/cases',
     { type: 'bug', title: 'x y z', description: 'd' }, bearer(S.A));

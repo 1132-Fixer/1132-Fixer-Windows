@@ -56,6 +56,11 @@ async function health(res) {
         process.env.DISCORD_ENABLED === 'true' &&
         Boolean(process.env.DISCORD_BOT_TOKEN) &&
         Boolean(process.env.DISCORD_SUPPORT_FORUM_ID),
+      // Product codes this deployment accepts at POST /v1/principals. The
+      // browser extension registers with its own browser's code only when it
+      // is listed here, and falls back to CHROME otherwise, so an older
+      // deployment never rejects a newer client.
+      products: require('./lib/auth').PRODUCT_LIST,
     };
     // The Chrome extension probes this capability cross-origin (#16). Scoped
     // to v2 so the dark legacy response stays byte- and header-identical; a

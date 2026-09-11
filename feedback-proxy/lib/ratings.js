@@ -247,7 +247,7 @@ async function current(req, res, searchParams) {
   try {
     const productParam = clean(searchParams.get('product'), 20) || null;
     if (productParam && !require('./auth').PRODUCTS.has(productParam)) {
-      return fail(res, 400, 'validation_failed', 'product must be WINDOWS, CHROME, or MACOS.');
+      return fail(res, 400, 'validation_failed', require('./auth').PRODUCT_ERROR);
     }
     const { rows } = await db.query(
       'SELECT average, rating_count, distribution, generated_at FROM rating_snapshots ' +
