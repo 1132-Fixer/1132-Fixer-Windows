@@ -180,10 +180,17 @@ function forumTags(p) {
     feedback: process.env.DISCORD_TAG_TYPE_FEEDBACK_ID,
     rating_feedback: process.env.DISCORD_TAG_TYPE_RATING_ID,
   }[p.kind];
+  // Browser packages other than Chrome fall back to the Chrome platform tag
+  // until a dedicated forum tag id is configured for them, so a Firefox or
+  // Edge report is never posted without a platform tag.
+  const chromeTag = process.env.DISCORD_TAG_PLATFORM_CHROME_ID;
   const platformTag = {
     WINDOWS: process.env.DISCORD_TAG_PLATFORM_WINDOWS_ID,
-    CHROME: process.env.DISCORD_TAG_PLATFORM_CHROME_ID,
+    CHROME: chromeTag,
     MACOS: process.env.DISCORD_TAG_PLATFORM_MACOS_ID,
+    EDGE: process.env.DISCORD_TAG_PLATFORM_EDGE_ID || chromeTag,
+    FIREFOX: process.env.DISCORD_TAG_PLATFORM_FIREFOX_ID || chromeTag,
+    BRAVE: process.env.DISCORD_TAG_PLATFORM_BRAVE_ID || chromeTag,
   }[p.product];
   return [kindTag, process.env.DISCORD_TAG_STATE_NEW_ID, platformTag].filter(Boolean);
 }

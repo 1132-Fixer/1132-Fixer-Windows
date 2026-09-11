@@ -19,7 +19,14 @@ const db = require('./db');
 const ids = require('./ids');
 const { json, fail, clientIp, readBody, clean, createRateLimiter } = require('./http');
 
-const PRODUCTS = new Set(['WINDOWS', 'CHROME', 'MACOS']);
+// Product codes a client may register as. The browser extension ships one
+// package per browser (1132-Fixer/browser); each registers with its own code
+// when /health advertises it in capabilities.products, and falls back to
+// CHROME otherwise. Order here is the order advertised. Keep in step with the
+// `product` enum (migrations/001-core.sql, 003-browser-product-codes.sql).
+const PRODUCTS = new Set(['WINDOWS', 'CHROME', 'MACOS', 'EDGE', 'FIREFOX', 'BRAVE']);
+const PRODUCT_LIST = [...PRODUCTS];
+const PRODUCT_ERROR = 'product must be one of ' + PRODUCT_LIST.join(', ') + '.';
 const MAX_BODY_BYTES = 4 * 1024;
 
 // Same limiter pattern and budget as the legacy /feedback endpoint.
@@ -50,7 +57,7 @@ async function register(req, res) {
   }
   const product = clean(payload.product, 20);
   if (!PRODUCTS.has(product)) {
-    return fail(res, 400, 'validation_failed', 'product must be WINDOWS, CHROME, or MACOS.');
+    return fail(res, 400, 'validation_failed', PRODUCT_ERROR);
   }
   const appVersion = clean(payload.appVersion, 40);
   if (!appVersion) return fail(res, 400, 'validation_failed', 'appVersion is required.');
@@ -86,4 +93,4 @@ async function authenticate(req) {
   return rows[0];
 }
 
-module.exports = { register, authenticate, PRODUCTS };
+module.exports = { register, authenticate, PRODUCTS, PRODUCT_LIST, PRODUCT_ERROR };
