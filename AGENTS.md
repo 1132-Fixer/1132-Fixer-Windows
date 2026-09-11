@@ -50,6 +50,12 @@ this file.
   pointed at a rewritten-away commit; the pin was repaired, the instruction
   was not. Re-pin if it breaks again; never un-submodule it. Do not advance
   the pin without reviewing the design-system diff.
+- After the pin moves, run `npm run design:pin`. It rewrites the cited pin in
+  this file and in `DESIGN-SYNC.md` to match the gitlink, which
+  `tools/design-sync-pin-smoke.js` requires. The design-system sync workflow
+  moves the gitlink and never edits these two documents, so a sync pull request
+  fails `Run tests` on the pin check until you run it and commit both files.
+  `npm run design:pin -- --check` reports without writing.
 - Primary states are only: Checking, Ready, Fixing, Complete, Unable. Copy
   rules: `Ready to fix Zoom`, `Fix now`, one confirmation, `Open Zoom` only
   after verified success, never `Everything looks good.`, never raw
