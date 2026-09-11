@@ -97,7 +97,7 @@ inside an unrelated docs PR.
 What does **not** belong here:
 
 - The macOS app (`1132-Fixer/macos`).
-- The Chrome extension (`1132-Fixer/chrome`).
+- The browser extension for Chrome, Edge, Brave, and Firefox (`1132-Fixer/browser`).
 - The public website at https://1132-fixer.xyz/.
 - Secrets or production service credentials.
 

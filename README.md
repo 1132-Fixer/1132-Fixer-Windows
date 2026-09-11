@@ -32,7 +32,7 @@ This is the **canonical public source** for the Windows app. Issues, pull reques
 Companion products in the same organization:
 
 - [macOS](https://github.com/1132-Fixer/macos)
-- [Chrome](https://github.com/1132-Fixer/chrome)
+- [Browser extension (Chrome, Edge, Brave, Firefox)](https://github.com/1132-Fixer/browser)
 
 ---
 
