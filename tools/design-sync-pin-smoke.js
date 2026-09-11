@@ -34,7 +34,7 @@ for (const file of ['AGENTS.md', 'DESIGN-SYNC.md']) {
   const cited = [...text.matchAll(/`design-system`[^`\n]*@ `([0-9a-f]{40})`|pinned to `([0-9a-f]{40})`/g)].map((x) => x[1] || x[2]);
   check(cited.length > 0, `${file} cites a 40-hex design-system pin`);
   const wrong = cited.filter((c) => c !== pin);
-  check(wrong.length === 0, `${file}: every cited pin equals the gitlink ${pin.slice(0, 12)}${wrong.length ? ' (found ' + wrong.map((w) => w.slice(0, 12)).join(', ') + ')' : ''}`);
+  check(wrong.length === 0, `${file}: every cited pin equals the gitlink ${pin.slice(0, 12)}${wrong.length ? ' (found ' + wrong.map((w) => w.slice(0, 12)).join(', ') + ') - run "npm run design:pin" to roll them' : ''}`);
 }
 
 console.log('design-sync-pin-smoke: pinned source has the Windows platform record');
