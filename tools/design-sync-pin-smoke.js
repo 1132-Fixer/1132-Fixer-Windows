@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const { PIN_SITES, citationsIn } = require('./roll-design-pin');
 
 const ROOT = path.join(__dirname, '..');
 let failures = 0;
@@ -29,9 +30,13 @@ check(/\[submodule "design-system"\][\s\S]*?path = design-system[\s\S]*?url = ht
 check(!/@|:\/\/[^\/]*:[^\/]*@/.test(gitmodules.replace(/https:\/\/github\.com/g, '')), '.gitmodules carries no credentials');
 
 console.log('design-sync-pin-smoke: documents cite the same pin');
-for (const file of ['AGENTS.md', 'DESIGN-SYNC.md']) {
+// The scanner and the file list come from tools/roll-design-pin.js, so this
+// gate and the roller that satisfies it cannot drift apart. Adding a citation
+// the roller does not know about makes the roller fail loudly rather than
+// leaving this check to fail later.
+for (const file of PIN_SITES.map((s) => s.file)) {
   const text = fs.readFileSync(path.join(ROOT, file), 'utf8');
-  const cited = [...text.matchAll(/`design-system`[^`\n]*@ `([0-9a-f]{40})`|pinned to `([0-9a-f]{40})`/g)].map((x) => x[1] || x[2]);
+  const cited = citationsIn(text);
   check(cited.length > 0, `${file} cites a 40-hex design-system pin`);
   const wrong = cited.filter((c) => c !== pin);
   check(wrong.length === 0, `${file}: every cited pin equals the gitlink ${pin.slice(0, 12)}${wrong.length ? ' (found ' + wrong.map((w) => w.slice(0, 12)).join(', ') + ') - run "npm run design:pin" to roll them' : ''}`);

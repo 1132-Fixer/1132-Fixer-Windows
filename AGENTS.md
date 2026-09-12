@@ -50,12 +50,27 @@ this file.
   pointed at a rewritten-away commit; the pin was repaired, the instruction
   was not. Re-pin if it breaks again; never un-submodule it. Do not advance
   the pin without reviewing the design-system diff.
-- After the pin moves, run `npm run design:pin`. It rewrites the cited pin in
-  this file and in `DESIGN-SYNC.md` to match the gitlink, which
-  `tools/design-sync-pin-smoke.js` requires. The design-system sync workflow
-  moves the gitlink and never edits these two documents, so a sync pull request
-  fails `Run tests` on the pin check until you run it and commit both files.
-  `npm run design:pin -- --check` reports without writing.
+- **`design:pin` is this repository's contract with the shared design-system
+  sync.** The sync moves the gitlink and knows nothing about our prose, so it
+  calls `npm run design:pin -- <40-hex sha>` when the script exists and commits
+  the result in the same pull request. `1132-Fixer/design-system` hardcodes no
+  path of ours; the script name is the whole interface.
+  - `npm run design:pin` rolls to the current gitlink;
+    `npm run design:pin -- <sha>` rolls to an explicit commit and refuses if it
+    disagrees with the gitlink; `npm run design:pin -- --check` reports and
+    exits 1 without writing.
+  - Citations live in exactly two declared places, listed as `PIN_SITES` in
+    `tools/roll-design-pin.js`: the `pinned to \`<sha>\`` note in this file, and
+    each `Pinned design source: \`design-system\` @ \`<sha>\`` line in
+    `DESIGN-SYNC.md`. Nothing else is rewritten, so an unrelated 40-hex commit
+    in either document is safe.
+  - It fails rather than guessing when a declared citation is missing, when
+    citations disagree, when a pin is malformed, when the SHA is not 40 lowercase
+    hex, or when a design-system citation appears somewhere `PIN_SITES` does not
+    cover. Moving a citation means updating `PIN_SITES`, not loosening it.
+  - `tools/design-sync-pin-smoke.js` imports `PIN_SITES` from the same file, so
+    the gate and the roller cannot drift apart.
+    `tools/roll-design-pin-smoke.js` covers the behaviour and runs in `npm test`.
 - Primary states are only: Checking, Ready, Fixing, Complete, Unable. Copy
   rules: `Ready to fix Zoom`, `Fix now`, one confirmation, `Open Zoom` only
   after verified success, never `Everything looks good.`, never raw
