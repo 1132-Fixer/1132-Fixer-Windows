@@ -63,12 +63,37 @@ function declaredIn(text, site) {
   return [...text.matchAll(site.find)].map((m) => m[2]);
 }
 
-/** Reads the design-system gitlink, or throws when it is not a gitlink. */
-function readGitlink(root = ROOT) {
+/** The commit the design-system submodule is actually checked out at, or null. */
+function submoduleHead(root = ROOT) {
+  const rp = spawnSync('git', ['-C', 'design-system', 'rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' });
+  const sha = (rp.stdout || '').trim();
+  return SHA_RE.test(sha) ? sha : null;
+}
+
+/** The commit the superproject index records for the submodule, or null. */
+function indexGitlink(root = ROOT) {
   const ls = spawnSync('git', ['ls-files', '-s', 'design-system'], { cwd: root, encoding: 'utf8' });
   const m = /^160000 ([0-9a-f]{40}) 0\tdesign-system$/m.exec(ls.stdout || '');
-  if (!m) throw new Error(`design-system is not a gitlink: ${(ls.stdout || ls.stderr || '').trim() || '(no output)'}`);
-  return m[1];
+  return m ? m[1] : null;
+}
+
+/**
+ * The design-system commit this checkout is on.
+ *
+ * The submodule's own HEAD wins over the superproject index, and that
+ * distinction is the whole reason this function exists. The shared sync moves
+ * the submodule working tree first and stages the gitlink afterwards, so
+ * during the hook the index still reports the PREVIOUS commit. Reading the
+ * index there rolled 1132-Fixer/windows#223 to 793d3cf while the gitlink went
+ * to 08024a1, and "Build & Test" failed on a pull request the automation had
+ * just "fixed".
+ */
+function readGitlink(root = ROOT) {
+  const head = submoduleHead(root);
+  if (head) return head;
+  const staged = indexGitlink(root);
+  if (staged) return staged;
+  throw new Error('cannot determine the design-system commit: the submodule is not checked out and no gitlink is staged. Run: git submodule update --init --recursive');
 }
 
 /**
@@ -122,7 +147,7 @@ function main(argv) {
       throw new Error(`"${pin}" is not a full 40-character lowercase commit SHA`);
     }
     if (pin !== gitlink) {
-      throw new Error(`refusing to roll: asked for ${pin.slice(0, 12)} but the design-system gitlink is ${gitlink.slice(0, 12)}. Move the submodule first, then roll.`);
+      throw new Error(`refusing to roll: asked for ${pin.slice(0, 12)} but the design-system submodule is at ${gitlink.slice(0, 12)}. Move the submodule first, then roll.`);
     }
   }
 
@@ -154,7 +179,7 @@ function main(argv) {
   return 0;
 }
 
-module.exports = { PIN_SITES, ANY_CITATION, SHA_RE, rollText, citationsIn, declaredIn, readGitlink };
+module.exports = { PIN_SITES, ANY_CITATION, SHA_RE, rollText, citationsIn, declaredIn, readGitlink, submoduleHead, indexGitlink };
 
 if (require.main === module) {
   try {

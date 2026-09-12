@@ -126,6 +126,22 @@ console.log('roll-design-pin: idempotence');
   check(second.replaced === 0 && second.text === text, 'a second roll is also a no-op');
 }
 
+console.log('roll-design-pin: the submodule HEAD wins over the superproject index');
+{
+  // The shared sync moves the submodule working tree, runs this hook, and
+  // stages the gitlink afterwards. Reading the index during the hook reports
+  // the PREVIOUS commit, which is how 1132-Fixer/windows#223 was opened with
+  // its gitlink at 08024a1 and its citations rolled to 793d3cf.
+  const { submoduleHead, indexGitlink, readGitlink } = require('./roll-design-pin');
+  const head = submoduleHead();
+  const staged = indexGitlink();
+  check(head === null || /^[0-9a-f]{40}$/.test(head), 'submoduleHead returns a full SHA or null');
+  check(staged === null || /^[0-9a-f]{40}$/.test(staged), 'indexGitlink returns a full SHA or null');
+  if (head) check(readGitlink() === head, 'readGitlink prefers the submodule HEAD');
+  else if (staged) check(readGitlink() === staged, 'readGitlink falls back to the staged gitlink');
+  else check(true, 'no submodule in this checkout; nothing to compare');
+}
+
 console.log('');
 if (failures) {
   console.error(`roll-design-pin: ${failures} failure(s)`);
